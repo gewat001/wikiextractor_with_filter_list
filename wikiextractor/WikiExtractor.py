@@ -69,6 +69,12 @@ from .extract import Extractor, ignoreTag, define_template, acceptedNamespaces
 
 # Program version
 __version__ = '3.0.7'
+# added for list filtering
+title_whitelist = None  # globale Titelliste
+def load_title_whitelist(path):
+    with open(path, encoding='utf-8') as f:
+        return set(line.strip() for line in f if line.strip())
+
 
 ##
 # Defined in <siteinfo>
@@ -324,8 +330,11 @@ def collect_pages(text):
             page.append(line)
         elif tag == '/page':
             colon = title.find(':')
-            if (colon < 0 or (title[:colon] in acceptedNamespaces) and id != last_id and
-                    not redirect and not title.startswith(templateNamespace)):
+
+            if title_whitelist and title not in title_whitelist:
+                pass  # überspringen, nicht in Whitelist
+            elif (colon < 0 or (title[:colon] in acceptedNamespaces)) and id != last_id and \
+                    not redirect and not title.startswith(templateNamespace):
                 yield (id, revid, title, page)
                 last_id = id
             id = ''
@@ -567,6 +576,7 @@ def main():
                         help="Number of processes to use (default %(default)s)")
 
     groupS = parser.add_argument_group('Special')
+    groupS.add_argument("--title_whitelist", help="Pfad zur Datei mit erlaubten Artikeltiteln")
     groupS.add_argument("-q", "--quiet", action="store_true",
                         help="suppress reporting progress info")
     groupS.add_argument("--debug", action="store_true",
@@ -578,6 +588,11 @@ def main():
                         help="print program version")
 
     args = parser.parse_args()
+
+    global title_whitelist
+    if args.title_whitelist:
+        title_whitelist = load_title_whitelist(args.title_whitelist)
+
 
     Extractor.keepLinks = args.links
     Extractor.HtmlFormatting = args.html
