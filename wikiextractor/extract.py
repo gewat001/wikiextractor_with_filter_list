@@ -396,7 +396,8 @@ def replaceExternalLinks(text):
         cur = m.end()
 
         url = m.group(1)
-        label = m.group(3)
+        label = m.group(3) if m.lastindex and m.lastindex >= 3 else ""
+
 
         # # The characters '<' and '>' (which were escaped by
         # # removeHTMLtags()) should not be included in
